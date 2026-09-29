@@ -85,3 +85,13 @@ def test_filter_and_excel_export():
     assert str(sheet.page_setup.paperSize) == str(sheet.PAPERSIZE_A4)
     assert sheet.page_setup.fitToWidth == 1
     assert sheet.page_setup.fitToHeight == 0
+
+
+def test_report_has_only_requested_columns_in_requested_order():
+    source = pd.DataFrame({"NOME": ["Ana"], "NUMFUNC": ["1"], "CARGO": ["Enfermeira"]})
+
+    report = app.select_report_columns(source)
+
+    assert list(report.columns) == app.REPORT_COLUMNS
+    assert len(report.columns) == 14
+    assert report.loc[0, "NOME"] == "Ana"

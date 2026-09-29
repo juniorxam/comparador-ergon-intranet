@@ -283,6 +283,22 @@ def filter_results(df, hospital="(Todos)"):
     return df[df["HOSPITAL_ERGON"] == hospital].copy().reset_index(drop=True)
 
 
+REPORT_COLUMNS = [
+    "ORDEM", "CHAVE_VINCULO", "NOME", "NUMFUNC", "NUMVINC", "CPF",
+    "EXERCICIO", "TIPO_VINCULO", "CARGO", "MOTIVO_DESATIVACAO", "PERIODO",
+    "HOSPITAL_ERGON", "HOSPITAL_INTRANET", "ENCONTRADO_INTRANET",
+]
+
+
+def select_report_columns(df):
+    """Retorna a saída principal na ordem solicitada, preenchendo campos ausentes."""
+    output = df.copy()
+    for column in REPORT_COLUMNS:
+        if column not in output.columns:
+            output[column] = ""
+    return output[REPORT_COLUMNS].reset_index(drop=True)
+
+
 def build_hospital_summary(mapped):
     if mapped.empty:
         return pd.DataFrame(columns=["HOSPITAL_ERGON", "HOSPITAL_INTRANET", "FOLHA_UNICOS", "ESCALADOS", "NAO_ESCALADOS"])
@@ -419,6 +435,7 @@ def main():
     with st.sidebar:
         hospital = st.selectbox("Filtrar hospital", hospitals)
     filtered = filter_results(not_scaled, hospital)
+    filtered_report = select_report_columns(filtered)
     st.success(f"Arquivos processados: {format_br_int(len(ergon))} registros do Ergon e {format_br_int(len(intranet))} vínculos/escala(s) da Intranet.")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Chaves na folha", format_br_int(mapped["CHAVE_VINCULO"].nunique()))
@@ -434,7 +451,7 @@ def main():
         if filtered.empty:
             st.success("Nenhum servidor não escalado encontrado para o filtro selecionado.")
         else:
-            display_dataframe(filtered, use_container_width=True, hide_index=True, height=520)
+            display_dataframe(filtered_report, use_container_width=True, hide_index=True, height=520)
     with tab_summary:
         st.subheader("Conferência por hospital")
         display_dataframe(summary, use_container_width=True, hide_index=True)
@@ -446,12 +463,8 @@ def main():
             display_dataframe(unmapped[[c for c in ["CHAVE_VINCULO", "NOME", "NUMFUNC", "NUMVINC", "LOTACAO", "CARGO"] if c in unmapped.columns]], use_container_width=True, hide_index=True)
     st.markdown("---")
     st.subheader("Exportar comparação")
-    st.caption("O Excel contém somente os resultados do hospital selecionado e o resumo completo dos hospitais mapeados.")
-    export = {
-        "Nao escalados": filtered,
-        "Resumo hospitais": summary,
-        "Fora mapeamento": unmapped,
-    }
+    st.caption("O Excel contém somente as 14 colunas do relatório, respeitando o hospital selecionado.")
+    export = {"Nao escalados": filtered_report}
     st.download_button(
         "Baixar Excel da comparação",
         data=df_to_excel_bytes(export),

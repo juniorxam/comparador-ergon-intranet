@@ -31,6 +31,11 @@ st.markdown(
 [data-testid="stSidebar"] [data-testid="stFileUploader"] button { color: #16324F !important; background: #F8FAFC !important; border: 1px solid #94A3B8 !important; }
 [data-testid="stSidebar"] [data-testid="stFileUploader"] button * { color: #16324F !important; }
 [data-testid="stSidebar"] [data-testid="stFileUploader"] small { color: #CBD5E1 !important; }
+[data-testid="stSidebar"] [data-baseweb="select"] > div { background: #FFFFFF !important; border-color: #94A3B8 !important; }
+[data-testid="stSidebar"] [data-baseweb="select"] * { color: #16324F !important; }
+[data-testid="stSidebar"] [role="combobox"], [data-testid="stSidebar"] [role="combobox"] * { color: #16324F !important; -webkit-text-fill-color: #16324F !important; }
+[data-testid="stSidebar"] input { color: #16324F !important; -webkit-text-fill-color: #16324F !important; }
+[data-testid="stSidebar"] input::placeholder { color: #64748B !important; -webkit-text-fill-color: #64748B !important; opacity: 1 !important; }
 .hero { padding: 26px 30px; border-radius: 20px; margin: 4px 0 24px; color: white;
     background: radial-gradient(circle at 90% 10%, #2DD4BF 0, transparent 30%), linear-gradient(120deg, #16324F 0%, #0F766E 100%);
     box-shadow: 0 12px 28px rgba(15,118,110,.18); }

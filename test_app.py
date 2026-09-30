@@ -103,10 +103,11 @@ def test_excel_export_includes_hospital_summary_sheet():
 
 
 def test_report_has_only_requested_columns_in_requested_order():
-    source = pd.DataFrame({"NOME": ["Ana"], "NUMFUNC": ["1"], "CARGO": ["Enfermeira"]})
+    source = pd.DataFrame({"NOME": ["Ana", "Bia"], "NUMFUNC": ["1", "2"], "CARGO": ["Enfermeira", "Técnica"]})
 
     report = app.select_report_columns(source)
 
     assert list(report.columns) == app.REPORT_COLUMNS
     assert len(report.columns) == 14
     assert report.loc[0, "NOME"] == "Ana"
+    assert report["ORDEM"].tolist() == [1, 2]

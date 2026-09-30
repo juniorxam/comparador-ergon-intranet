@@ -296,7 +296,9 @@ def select_report_columns(df):
     for column in REPORT_COLUMNS:
         if column not in output.columns:
             output[column] = ""
-    return output[REPORT_COLUMNS].reset_index(drop=True)
+    output = output[REPORT_COLUMNS].reset_index(drop=True)
+    output["ORDEM"] = range(1, len(output) + 1)
+    return output
 
 
 def build_hospital_summary(mapped):

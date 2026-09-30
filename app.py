@@ -463,8 +463,11 @@ def main():
             display_dataframe(unmapped[[c for c in ["CHAVE_VINCULO", "NOME", "NUMFUNC", "NUMVINC", "LOTACAO", "CARGO"] if c in unmapped.columns]], use_container_width=True, hide_index=True)
     st.markdown("---")
     st.subheader("Exportar comparação")
-    st.caption("O Excel contém somente as 14 colunas do relatório, respeitando o hospital selecionado.")
-    export = {"Nao escalados": filtered_report}
+    st.caption("O Excel contém o relatório com as 14 colunas solicitadas e uma aba separada com o resumo por hospital.")
+    export = {
+        "Nao escalados": filtered_report,
+        "Resumo hospitais": summary,
+    }
     st.download_button(
         "Baixar Excel da comparação",
         data=df_to_excel_bytes(export),

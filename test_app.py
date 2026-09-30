@@ -87,6 +87,21 @@ def test_filter_and_excel_export():
     assert sheet.page_setup.fitToHeight == 0
 
 
+def test_excel_export_includes_hospital_summary_sheet():
+    summary = pd.DataFrame({
+        "HOSPITAL_ERGON": ["Hospital A"],
+        "HOSPITAL_INTRANET": ["Hospital A Intranet"],
+        "FOLHA_UNICOS": [3],
+        "ESCALADOS": [2],
+        "NAO_ESCALADOS": [1],
+    })
+
+    workbook = load_workbook(io.BytesIO(app.df_to_excel_bytes({"Nao escalados": pd.DataFrame(), "Resumo hospitais": summary})))
+
+    assert "Resumo hospitais" in workbook.sheetnames
+    assert workbook["Resumo hospitais"]["A2"].value == "Hospital A"
+
+
 def test_report_has_only_requested_columns_in_requested_order():
     source = pd.DataFrame({"NOME": ["Ana"], "NUMFUNC": ["1"], "CARGO": ["Enfermeira"]})
 

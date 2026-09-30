@@ -111,3 +111,18 @@ def test_report_has_only_requested_columns_in_requested_order():
     assert len(report.columns) == 14
     assert report.loc[0, "NOME"] == "Ana"
     assert report["ORDEM"].tolist() == [1, 2]
+
+
+def test_summary_pdf_is_generated():
+    summary = pd.DataFrame({
+        "HOSPITAL_ERGON": ["Hospital A"],
+        "HOSPITAL_INTRANET": ["Hospital A Intranet"],
+        "FOLHA_UNICOS": [3],
+        "ESCALADOS": [2],
+        "NAO_ESCALADOS": [1],
+    })
+
+    content = app.build_summary_pdf(summary, 3, 2, 1, 0)
+
+    assert content.startswith(b"%PDF")
+    assert len(content) > 1000

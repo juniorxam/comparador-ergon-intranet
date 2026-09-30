@@ -19,7 +19,7 @@ Envie uma planilha do Ergon e uma da Intranet. O Ergon deve conter pelo menos `N
 
 ## Saída
 
-A tela exibe indicadores, uma lista filtrável por hospital, resumo por hospital e lotações fora do mapeamento. O relatório principal e a aba exportada contêm somente as colunas `ORDEM`, `CHAVE_VINCULO`, `NOME`, `NUMFUNC`, `NUMVINC`, `CPF`, `EXERCICIO`, `TIPO_VINCULO`, `CARGO`, `MOTIVO_DESATIVACAO`, `PERIODO`, `HOSPITAL_ERGON`, `HOSPITAL_INTRANET` e `ENCONTRADO_INTRANET`. O Excel exportado respeita o filtro escolhido e é configurado para impressão em **A4 paisagem**, com ajuste para **uma página de largura**, cabeçalho repetido e área de impressão.
+A tela exibe indicadores, uma lista filtrável por hospital, resumo por hospital e lotações fora do mapeamento. O relatório principal e a aba exportada contêm somente as colunas `ORDEM`, `CHAVE_VINCULO`, `NOME`, `NUMFUNC`, `NUMVINC`, `CPF`, `EXERCICIO`, `TIPO_VINCULO`, `CARGO`, `MOTIVO_DESATIVACAO`, `PERIODO`, `HOSPITAL_ERGON`, `HOSPITAL_INTRANET` e `ENCONTRADO_INTRANET`. O Excel exportado respeita o filtro escolhido e é configurado para impressão em **A4 paisagem**, com ajuste para **uma página de largura**, cabeçalho repetido e área de impressão. Também é possível baixar um **PDF de resumo estatístico**, com indicadores gerais e tabela consolidada por hospital.
 
 ## Testes
 

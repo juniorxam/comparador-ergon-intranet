@@ -392,6 +392,76 @@ def df_to_excel_bytes(sheets):
     return output.getvalue()
 
 
+def build_summary_pdf(summary, total_chaves, total_escalados, total_not_scaled, total_unmapped, selected_hospital="(Todos)"):
+    """Gera um resumo estatístico compacto em PDF paisagem A4."""
+    from xml.sax.saxutils import escape
+
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    output = BytesIO()
+    document = SimpleDocTemplate(
+        output,
+        pagesize=landscape(A4),
+        rightMargin=12 * mm,
+        leftMargin=12 * mm,
+        topMargin=10 * mm,
+        bottomMargin=10 * mm,
+        title="Resumo estatístico - Comparador Ergon x Intranet",
+        author="Comparador Ergon x Intranet",
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle("ReportTitle", parent=styles["Title"], fontName="Helvetica-Bold", fontSize=18, leading=22, textColor=colors.HexColor("#16324F"), alignment=TA_LEFT, spaceAfter=4)
+    subtitle_style = ParagraphStyle("ReportSubtitle", parent=styles["Normal"], fontName="Helvetica", fontSize=9, leading=12, textColor=colors.HexColor("#64748B"), spaceAfter=10)
+    cell_style = ParagraphStyle("ReportCell", parent=styles["Normal"], fontName="Helvetica", fontSize=7.5, leading=9, textColor=colors.HexColor("#172033"))
+    header_style = ParagraphStyle("ReportHeader", parent=cell_style, fontName="Helvetica-Bold", textColor=colors.white, alignment=TA_CENTER)
+    metric_style = ParagraphStyle("Metric", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=10, leading=13, textColor=colors.HexColor("#16324F"), alignment=TA_CENTER)
+    story = [
+        Paragraph("Resumo estatístico — Comparador Ergon x Intranet", title_style),
+        Paragraph(f"Hospital selecionado: <b>{escape(str(selected_hospital))}</b> &nbsp;|&nbsp; Gerado em {datetime.today().strftime('%d/%m/%Y %H:%M')}", subtitle_style),
+    ]
+    metrics = Table([
+        [Paragraph("CHAVES NA FOLHA", header_style), Paragraph("ESCALADOS", header_style), Paragraph("NÃO ESCALADOS", header_style), Paragraph("FORA DO MAPEAMENTO", header_style)],
+        [Paragraph(format_br_int(total_chaves), metric_style), Paragraph(format_br_int(total_escalados), metric_style), Paragraph(format_br_int(total_not_scaled), metric_style), Paragraph(format_br_int(total_unmapped), metric_style)],
+    ], colWidths=[62 * mm] * 4, rowHeights=[8 * mm, 12 * mm])
+    metrics.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#16324F")),
+        ("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#ECFDF5")),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    section_style = ParagraphStyle("Section", parent=styles["Heading2"], fontName="Helvetica-Bold", fontSize=12, textColor=colors.HexColor("#0F766E"), spaceAfter=5)
+    story.extend([metrics, Spacer(1, 8 * mm), Paragraph("Resumo por hospital", section_style)])
+    table_data = [[Paragraph(escape(str(column)), header_style) for column in ["Hospital Ergon", "Hospital Intranet", "Folha", "Escalados", "Não escalados"]]]
+    for _, row in summary.iterrows():
+        table_data.append([
+            Paragraph(escape(safe_str(row.get("HOSPITAL_ERGON", ""))), cell_style),
+            Paragraph(escape(safe_str(row.get("HOSPITAL_INTRANET", ""))), cell_style),
+            Paragraph(format_br_int(row.get("FOLHA_UNICOS", 0)), cell_style),
+            Paragraph(format_br_int(row.get("ESCALADOS", 0)), cell_style),
+            Paragraph(format_br_int(row.get("NAO_ESCALADOS", 0)), cell_style),
+        ])
+    if len(table_data) == 1:
+        table_data.append([Paragraph("Nenhum hospital mapeado encontrado.", cell_style), "", "", "", ""])
+    hospital_table = Table(table_data, colWidths=[70 * mm, 92 * mm, 24 * mm, 28 * mm, 32 * mm], repeatRows=1)
+    hospital_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F766E")),
+        ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#CBD5E1")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (2, 1), (-1, -1), "CENTER"),
+        ("SPAN", (0, 1), (-1, 1)) if len(table_data) == 2 else ("LEFTPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(hospital_table)
+    document.build(story)
+    return output.getvalue()
+
+
 def main():
     st.markdown(
         """
@@ -470,12 +540,32 @@ def main():
         "Nao escalados": filtered_report,
         "Resumo hospitais": summary,
     }
-    st.download_button(
-        "Baixar Excel da comparação",
-        data=df_to_excel_bytes(export),
-        file_name=f"comparacao_ergon_intranet_{datetime.today().strftime('%Y%m%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    excel_bytes = df_to_excel_bytes(export)
+    pdf_bytes = build_summary_pdf(
+        summary,
+        mapped["CHAVE_VINCULO"].nunique(),
+        len(comparison["scaled"]),
+        len(not_scaled),
+        len(unmapped),
+        hospital,
     )
+    download_excel, download_pdf = st.columns(2)
+    with download_excel:
+        st.download_button(
+            "Baixar Excel da comparação",
+            data=excel_bytes,
+            file_name=f"comparacao_ergon_intranet_{datetime.today().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        )
+    with download_pdf:
+        st.download_button(
+            "Baixar resumo estatístico em PDF",
+            data=pdf_bytes,
+            file_name=f"resumo_estatistico_ergon_intranet_{datetime.today().strftime('%Y%m%d')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
 
 if __name__ == "__main__":
